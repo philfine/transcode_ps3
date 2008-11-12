@@ -80,8 +80,15 @@ WITHOUT_SUBTITLES="video_input. ! queue name=video_output"
 case "$2" in 
   ps3)
     VIDEO_ENCODE="video_output. ! queue ! x264enc bitrate=2000 cabac=true trellis=true pass=0 ! queue ! muxer."
-    AUDIO_ENCODE="dec_input. ! audioconvert ! faac profile=1 ! muxer."
+#AUDIO_ENCODE="dec_input. ! audioconvert ! faac profile=2 ! muxer."
+    AUDIO_ENCODE="dec_input. ! audioconvert ! audio/x-raw-int, channels=2 ! audioconvert ! faac profile=2 ! muxer."
     MUXER="ffmux_mp4 name=muxer ! progressreport update-freq=1 ! filesink location=${OUTPUT_FILE}"
+    ;;
+  ps31)
+    VIDEO_ENCODE="video_output. ! queue ! x264enc ! queue ! muxer."
+#AUDIO_ENCODE="dec_input. ! audioconvert ! faac profile=2 ! muxer."
+    AUDIO_ENCODE="dec_input. ! audioconvert ! faac profile=2 ! muxer."
+    MUXER="mpegtsmux name=muxer ! progressreport update-freq=1 ! filesink location=${OUTPUT_FILE}"
     ;;
   iphone)
     VIDEO_ENCODE="video_output. ! x264enc ! muxer."
@@ -94,7 +101,7 @@ case "$2" in
 esac
 
 DISPLAY_VIDEO_SINK="video_output. ! ffmpegcolorspace ! queue ! autovideosink"
-DISPLAY_AUDIO_SINK="dec_input. ! queue ! autoaudiosink"
+DISPLAY_AUDIO_SINK="dec_input. ! audioconvert ! queue ! autoaudiosink"
 
 cmd="gst-launch-0.10 -v"
 cmd="$cmd ${READ_VIDEO}"
