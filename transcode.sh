@@ -69,7 +69,7 @@ esac
 
 #Read movie part - also includes scalling
 
-READ_VIDEO="filesrc location=${INPUT_FILE} ! decodebin name=dec_input ! ${SCALE} ! ffmpegcolorspace name=video_input"
+READ_VIDEO="filesrc location=${INPUT_FILE} ! progressreport update-freq=1 ! decodebin2 name=dec_input ! ${SCALE} ! ffmpegcolorspace name=video_input"
 
 READ_SUBTITLES="filesrc location=${SUBTITLES_FILE} ! queue ! subparse ! textoverlay name=overlay font-desc=${FONTSIZE} ! queue name=video_output"
 WITH_SUBTITLES="video_input. ! overlay."
@@ -80,15 +80,15 @@ WITHOUT_SUBTITLES="video_input. ! queue name=video_output"
 case "$2" in 
   ps3)
     VIDEO_ENCODE="video_output. ! queue ! x264enc bitrate=2000 cabac=true trellis=true pass=0 ! queue ! muxer."
-#AUDIO_ENCODE="dec_input. ! audioconvert ! faac profile=2 ! muxer."
     AUDIO_ENCODE="dec_input. ! audioconvert ! audio/x-raw-int, channels=2 ! audioconvert ! faac profile=2 ! muxer."
-    MUXER="ffmux_mp4 name=muxer ! progressreport update-freq=1 ! filesink location=${OUTPUT_FILE}"
+#AUDIO_ENCODE="dec_input. ! audioconvert ! audio/x-raw-int, channels=2 ! faac profile=2 ! muxer."
+    MUXER="ffmux_mp4 name=muxer ! filesink location=${OUTPUT_FILE}"
     ;;
-  ps31)
-    VIDEO_ENCODE="video_output. ! queue ! x264enc ! queue ! muxer."
+  ps3HD)
+    VIDEO_ENCODE="video_output. ! queue ! x264enc bitrate=5000 cabac=true trellis=true pass=0 ! queue ! muxer."
+    AUDIO_ENCODE="dec_input. ! audioconvert ! audio/x-raw-int, channels=2 ! audioconvert ! ffenc_mp2 ! muxer."
 #AUDIO_ENCODE="dec_input. ! audioconvert ! faac profile=2 ! muxer."
-    AUDIO_ENCODE="dec_input. ! audioconvert ! faac profile=2 ! muxer."
-    MUXER="mpegtsmux name=muxer ! progressreport update-freq=1 ! filesink location=${OUTPUT_FILE}"
+    MUXER="mpegtsmux m2ts-mode=true name=muxer ! filesink location=${OUTPUT_FILE}"
     ;;
   iphone)
     VIDEO_ENCODE="video_output. ! x264enc ! muxer."
@@ -101,7 +101,7 @@ case "$2" in
 esac
 
 DISPLAY_VIDEO_SINK="video_output. ! ffmpegcolorspace ! queue ! autovideosink"
-DISPLAY_AUDIO_SINK="dec_input. ! audioconvert ! queue ! autoaudiosink"
+DISPLAY_AUDIO_SINK="dec_input. ! audioconvert ! audio/x-raw-int, channels=2 ! audioconvert ! queue ! autoaudiosink"
 
 cmd="gst-launch-0.10 -v"
 cmd="$cmd ${READ_VIDEO}"
